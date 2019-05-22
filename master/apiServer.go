@@ -171,9 +171,11 @@ var (
 //初始化服务
 func InitApiServer() (err error) {
 	var (
-		mux        *http.ServeMux
-		listener   net.Listener
-		httpServer *http.Server
+		mux          *http.ServeMux
+		listener     net.Listener
+		httpServer   *http.Server
+		staticDir    http.Dir
+		staticHandle http.Handler
 	)
 
 	//配置路由
@@ -182,6 +184,16 @@ func InitApiServer() (err error) {
 	mux.HandleFunc("/job/delete", handleJobDelete)
 	mux.HandleFunc("/job/list", handleJobList)
 	mux.HandleFunc("/job/kill", handleJobKill)
+
+	//配置静态资源路由，前端路由
+
+	//根目录路径
+	staticDir = http.Dir(G_Config.WebRoot)
+	//创建静态文件handle
+	staticHandle = http.FileServer(staticDir)
+
+	//http.StripPrefix   截掉该部分   例子 访问：/index.html   截掉/，得到的是index.html
+	mux.Handle("/", http.StripPrefix("/", staticHandle))
 
 	//启动tcp监听
 	if listener, err = net.Listen("tcp", ":"+strconv.Itoa(G_Config.ApiPort)); err != nil {
