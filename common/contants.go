@@ -6,4 +6,10 @@ const (
 
 	//强杀任务目录
 	JOB_KILLER_DIR = "/cron/kill/"
+
+	//变化事件更新操作
+	JOB_EVENT_SAVE_TYPE=1
+
+	//变化事件删除操作
+	JOB_EVENT_DELETE_TYPE=2
 )

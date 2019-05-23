@@ -5,6 +5,7 @@ import (
 	"flag"
 	"log"
 	"runtime"
+	"time"
 )
 
 var (
@@ -40,9 +41,23 @@ func main() {
 		goto ERR
 	}
 
+	//初始化执行器
+	if err = worker.InitExecutor(); err != nil {
+		goto ERR
+	}
+
+	//初始化调度器
+	if err = worker.InitSchedule(); err != nil {
+		goto ERR
+	}
+
 	//任务管理器
 	if err = worker.InitJobManage(); err != nil {
 		goto ERR
+	}
+
+	for {
+		time.Sleep(time.Second)
 	}
 
 	//正常退出
