@@ -167,22 +167,28 @@ func (schedule *Schedule) ScheduleLoop() {
 	scheduleTime = time.NewTimer(scheduleAfter)
 
 	for {
+		//判断是否重新计算调度服务，只有监听到任务变化或者任务到期需要重新计算，接收任务结果不需要操作
+		var isScheduleExecute = false
+
 		select {
 		case jobEvent = <-schedule.JobEventChan: //监听任务变化事件
+			isScheduleExecute = true
 			//处理任务事件
 			if err = schedule.HandleJobEvent(jobEvent); err != nil {
 				continue
 			}
 		case <-scheduleTime.C: //最近的调度任务到期了，需要执行调度
-
+			isScheduleExecute = true
 		case executeResult = <-schedule.JobExecuteResultChan: //接收任务执行结果
 			schedule.HandleExecuteResult(executeResult)
 		}
 
-		//当监听到事件变化或者调度任务过期，重新计算调度任务，执行
-		scheduleAfter = schedule.TrySchedule()
-		//重新计算调度间隔
-		scheduleTime = time.NewTimer(scheduleAfter)
+		if isScheduleExecute {
+			//当监听到事件变化或者调度任务过期，重新计算调度任务，执行
+			scheduleAfter = schedule.TrySchedule()
+			//重新计算调度间隔
+			scheduleTime = time.NewTimer(scheduleAfter)
+		}
 	}
 }
 

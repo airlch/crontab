@@ -3,5 +3,8 @@
   "etcdEndpoints":["127.0.0.1:2379"],
 
   "etcd连接超时时间": "单位是毫秒",
-  "etcdDialTimeout":5000
+  "etcdDialTimeout":5000,
+
+  "配置执行器的数量": "多个协程一起工作",
+  "executeWorkCount":5
 }

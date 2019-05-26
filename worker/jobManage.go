@@ -140,3 +140,11 @@ func InitJobManage() (err error) {
 
 	return
 }
+
+//创建任务执行锁
+func (jobMgr *JobManage) CreateJobLock(jobName string) (JobLock *JobLock) {
+	//返回一把锁
+	JobLock = InitJobLock(jobName, jobMgr.Kv, jobMgr.Lease)
+
+	return
+}
