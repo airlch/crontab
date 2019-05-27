@@ -56,6 +56,11 @@ func main() {
 		goto ERR
 	}
 
+	//初始化日志保存
+	if err = worker.InitLogSink(); err != nil {
+		goto ERR
+	}
+
 	for {
 		time.Sleep(time.Second)
 	}

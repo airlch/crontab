@@ -3,7 +3,6 @@ package worker
 import (
 	"airlch/crontab/common"
 	"context"
-	"errors"
 	"github.com/coreos/etcd/clientv3"
 )
 
@@ -95,7 +94,7 @@ func (jobLockObj *JobLock) TryLock() (err error) {
 
 	//6.成功返回，失败回滚
 	if !txnResp.Succeeded {
-		err = errors.New("锁被占用！")
+		err = common.ERR_LOCK_ALREADY_REQUIRED
 		goto FAIL
 	}
 

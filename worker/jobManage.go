@@ -84,6 +84,8 @@ func (jobMgr *JobManage) WatchJobs() (err error) {
 					//delete /cron/job/job1    需要提取出job1
 					jobName = common.ExtractJobName(string(event.Kv.Key))
 
+					job = &common.Job{Name: jobName}
+
 					//构建一个删除event事件
 					//jobEvent = &common.JobEvent{EventType: common.JOB_EVENT_DELETE_TYPE, Job: job}
 					jobEvent = common.BuildJobEvent(common.JOB_EVENT_DELETE_TYPE, job)
@@ -92,6 +94,48 @@ func (jobMgr *JobManage) WatchJobs() (err error) {
 
 				//todo:推送一个事件给schedule(删除，更新)
 				G_Schedule.PushJobEvent(jobEvent)
+
+				fmt.Println(*jobEvent)
+			}
+		}
+	}()
+
+	return
+}
+
+//监听强杀事件
+func (jobMgr *JobManage) WatchKill() (err error) {
+	var (
+		watchChan clientv3.WatchChan
+		watchResp clientv3.WatchResponse
+		job       *common.Job
+		event     *clientv3.Event
+		jobName   string
+		jobEvent  *common.JobEvent
+	)
+
+	//监听协程
+	go func() {
+		//监听/cron/kill目录下的后续变化
+		watchChan = jobMgr.Watcher.Watch(context.TODO(), common.JOB_KILLER_DIR, clientv3.WithPrefix())
+
+		//监听
+		for watchResp = range watchChan {
+			for _, event = range watchResp.Events {
+				switch event.Type {
+				case mvccpb.PUT: //任务强杀事件
+					jobName = common.ExtractKillName(string(event.Kv.Key))
+
+					job = &common.Job{Name: jobName}
+
+					//构建一个更新event事件
+					//jobEvent = &common.JobEvent{EventType: common.JOB_EVENT_SAVE_TYPE, Job: job}
+					jobEvent = common.BuildJobEvent(common.JOB_EVENT_KILL_TYPE, job)
+					//todo:推送一个事件给schedule(强杀)
+					G_Schedule.PushJobEvent(jobEvent)
+
+				case mvccpb.DELETE:
+				}
 
 				fmt.Println(*jobEvent)
 			}
@@ -137,6 +181,9 @@ func InitJobManage() (err error) {
 
 	// 启动任务监听
 	G_JobManage.WatchJobs()
+
+	// 启动监听强杀任务
+	G_JobManage.WatchKill()
 
 	return
 }

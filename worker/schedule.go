@@ -24,18 +24,6 @@ func (schedule *Schedule) PushJobEvent(jobEvent *common.JobEvent) {
 	schedule.JobEventChan <- jobEvent
 }
 
-////完成任务操作   同步修改内存中的执行表
-//func (schedule *Schedule)FinishExecute(ExecuteInfo *common.JobExecuteInfo)  {
-//	var(
-//		jobExecuteInfoIsExist bool
-//	)
-//
-//	//同步内存，执行完成任务
-//	if _, jobExecuteInfoIsExist = G_Schedule.JobExecuteInfoTable[ExecuteInfo.Job.Name]; jobExecuteInfoIsExist {
-//		delete(G_Schedule.JobExecuteInfoTable, ExecuteInfo.Job.Name)
-//	}
-//}
-
 //推送任务执行结果
 func (schedule *Schedule) PushExecuteResult(info *common.JobExecuteResult) {
 	schedule.JobExecuteResultChan <- info
@@ -44,12 +32,26 @@ func (schedule *Schedule) PushExecuteResult(info *common.JobExecuteResult) {
 func (schedule *Schedule) HandleExecuteResult(info *common.JobExecuteResult) {
 	var (
 		jobExecuteInfoIsExist bool
+		jobLog                *common.JobLog
 	)
 
 	//同步内存，执行完成任务
 	if _, jobExecuteInfoIsExist = G_Schedule.JobExecuteInfoTable[info.ExecuteInfo.Job.Name]; jobExecuteInfoIsExist {
 		delete(G_Schedule.JobExecuteInfoTable, info.ExecuteInfo.Job.Name)
 	}
+
+	//实例化日志数据插入类
+	jobLog = &common.JobLog{
+		JobName:      info.ExecuteInfo.Job.Name,
+		Command:      info.ExecuteInfo.Job.Command,
+		Output:       string(info.Output),
+		PlanTime:     info.ExecuteInfo.PlanTime.UnixNano() / 1000 / 1000,
+		ScheduleTime: info.ExecuteInfo.RealTime.UnixNano() / 1000 / 1000,
+		StartTime:    info.StartTime.UnixNano() / 1000 / 1000,
+		EndTime:      info.EndTime.UnixNano() / 1000 / 1000,
+	}
+
+	//TODO：插入mongodb
 
 	fmt.Println("任务执行完成", info.ExecuteInfo.Job.Name, string(info.Output), info.Err)
 }
@@ -106,10 +108,10 @@ func (schedule *Schedule) TrySchedule() (scheduleAfter time.Duration) {
 
 	for _, jobPlan = range schedule.JobSchedulePlanTable {
 		if jobPlan.NextTime.Before(now) || jobPlan.NextTime.Equal(now) {
-			jobPlan.NextTime = jobPlan.Expr.Next(now)
-
 			//todo:执行任务
 			schedule.TryStartJob(jobPlan)
+
+			jobPlan.NextTime = jobPlan.Expr.Next(now)
 		}
 
 		if nextPlanTime == nil || jobPlan.NextTime.Before(*nextPlanTime) {
@@ -127,6 +129,8 @@ func (schedule *Schedule) HandleJobEvent(jobEvent *common.JobEvent) (err error) 
 	var (
 		jobSchedulePlan    *common.JobSchedulePlan
 		jobScheduleIsExist bool
+		jobExecuteInfo     *common.JobExecuteInfo
+		jobExecuteIsExist  bool
 	)
 	switch jobEvent.EventType {
 	case common.JOB_EVENT_SAVE_TYPE: //保存任务事件
@@ -138,14 +142,14 @@ func (schedule *Schedule) HandleJobEvent(jobEvent *common.JobEvent) (err error) 
 		//同步更改到内存中的调度计划表中，   保持etcd和内存一致
 		schedule.JobSchedulePlanTable[jobEvent.Job.Name] = jobSchedulePlan
 	case common.JOB_EVENT_DELETE_TYPE: //删除任务事件
-		//解析任务，构建任务调度计划
-		if jobSchedulePlan, err = common.BuildJobSchedulePlan(jobEvent.Job); err != nil {
-			return
-		}
-
 		//判断内存中是否存在，etcd中不存在了也是会接收到删除事件	保持etcd和内存一致
 		if jobSchedulePlan, jobScheduleIsExist = schedule.JobSchedulePlanTable[jobEvent.Job.Name]; jobScheduleIsExist {
 			delete(schedule.JobSchedulePlanTable, jobEvent.Job.Name)
+		}
+	case common.JOB_EVENT_KILL_TYPE: //强杀任务事件
+		//判断是否存在执行中的任务，存在则执行取消函数
+		if jobExecuteInfo, jobExecuteIsExist = schedule.JobExecuteInfoTable[jobEvent.Job.Name]; jobExecuteIsExist {
+			jobExecuteInfo.CancelFunc()
 		}
 	}
 

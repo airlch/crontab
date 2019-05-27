@@ -2,7 +2,6 @@ package worker
 
 import (
 	"airlch/crontab/common"
-	"context"
 	"fmt"
 	"os/exec"
 	"time"
@@ -111,8 +110,8 @@ func (executor *Executor) HandleExecute(info *common.JobExecuteInfo) {
 	} else {
 		executeResult.StartTime = time.Now() //开始时间重新计算
 
-		//执行shell命令
-		cmd = exec.CommandContext(context.TODO(), "e:\\soft\\cygwin\\bin\\bash.exe", "-c", info.Job.Command)
+		//执行shell命令		//可取消的context，强杀时调用其取消函数
+		cmd = exec.CommandContext(info.CancelCtx, "e:\\soft\\cygwin\\bin\\bash.exe", "-c", info.Job.Command)
 
 		//执行并捕获输出
 		output, err = cmd.CombinedOutput()

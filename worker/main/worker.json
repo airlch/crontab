@@ -6,5 +6,11 @@
   "etcdDialTimeout":5000,
 
   "配置执行器的数量": "多个协程一起工作",
-  "executeWorkCount":5
+  "executeWorkCount":5,
+
+  "mongodb地址": "数据库连接地址",
+  "mongodbUri": "mongodb://127.0.0.1:27017",
+
+  "mongodb超时时间": "单位 毫秒",
+  "mongodbTimeOut": 5000
 }
