@@ -51,7 +51,14 @@ func (schedule *Schedule) HandleExecuteResult(info *common.JobExecuteResult) {
 		EndTime:      info.EndTime.UnixNano() / 1000 / 1000,
 	}
 
+	if info.Err != nil {
+		jobLog.Err = info.Err.Error()
+	} else {
+		jobLog.Err = ""
+	}
+
 	//TODO：插入mongodb
+	G_LogSink.PushLog(jobLog)
 
 	fmt.Println("任务执行完成", info.ExecuteInfo.Job.Name, string(info.Output), info.Err)
 }

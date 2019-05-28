@@ -41,6 +41,11 @@ func main() {
 		goto ERR
 	}
 
+	//初始化日志操作
+	if err = master.InitLogManage(); err != nil {
+		goto ERR
+	}
+
 	//任务管理器
 	if err = master.InitJobManage(); err != nil {
 		goto ERR

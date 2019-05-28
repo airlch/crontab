@@ -9,6 +9,7 @@ type Config struct {
 	EtcdEndpoints    []string `json:"etcdEndpoints"`
 	EtcdDialTimeout  int      `json:"etcdDialTimeout"`
 	ExecuteWorkCount int      `json:"executeWorkCount"`
+	LogSinkWorkCount int      `json:"logSinkWorkCount"`
 	MongodbUri       string   `json:"mongodbUri"`
 	MongodbTimeOut   int      `json:"mongodbTimeOut"`
 }

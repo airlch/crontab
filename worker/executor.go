@@ -3,6 +3,7 @@ package worker
 import (
 	"airlch/crontab/common"
 	"fmt"
+	"math/rand"
 	"os/exec"
 	"time"
 )
@@ -100,6 +101,9 @@ func (executor *Executor) HandleExecute(info *common.JobExecuteInfo) {
 	//任务执行开始时间
 	executeResult.StartTime = time.Now()
 
+	//随机睡眠（0-1s）
+	time.Sleep(time.Duration(rand.Intn(1000)) * time.Millisecond)
+
 	//尝试上锁
 	err = jobLock.TryLock()
 	defer jobLock.Unlock() //执行完释放锁
@@ -133,7 +137,7 @@ func (executor *Executor) HandleExecute(info *common.JobExecuteInfo) {
 func InitExecutor() (err error) {
 	G_Executor = &Executor{
 		ExecuteInfoChan:   make(chan *common.JobExecuteInfo),
-		ExecuteWorkerChan: make(chan chan *common.JobExecuteInfo),
+			ExecuteWorkerChan: make(chan chan *common.JobExecuteInfo),
 	}
 
 	//监听任务执行

@@ -86,6 +86,40 @@
     </div><!-- /.modal-dialog -->
 </div><!-- /.modal -->
 
+<div id="log_Modal" class="modal fade" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span>
+                </button>
+                <h4 class="modal-title">查看日志
+                    <small id="logJobNameTxt"></small>
+                </h4>
+            </div>
+            <div class="modal-body">
+                <button id="logRefreshBtn" type="button" class="btn btn-info">刷新</button>
+                <table id="log_List" class="table table-striped">
+                    <thead>
+                    <tr>
+                        <th>shell命令</th>
+                        <th>错误原因</th>
+                        <th>脚本输出</th>
+                        <th>计划开始时间</th>
+                        <th>实际调度时间</th>
+                        <th>开始执行时间</th>
+                        <th>执行结束时间</th>
+                    </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+            </div>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
 <script>
     //页面加载完成后的回调函数
     $(document).ready(function () {
@@ -112,17 +146,28 @@
 
             killJob($(this).parents("tr").children(".jobName").text())
         })
+        //查看日志
+        $("#job_List").on("click", ".jobLog", function (event) {
+            console.log($(this).parents("tr").children(".jobName").text())
+
+            getJobLog($(this).parents("tr").children(".jobName").text())
+
+            $("#log_Modal").modal("show")
+        })
         //保存任务
-        $("#save_Job").on("click",function () {
-            saveJob($("#editName").val(),$("#editCommand").val(),$("#editCronExpr").val())
+        $("#save_Job").on("click", function () {
+            saveJob($("#editName").val(), $("#editCommand").val(), $("#editCronExpr").val())
         })
         //新建任务
-        $("#create_Job").on("click",function () {
+        $("#create_Job").on("click", function () {
             $("#editName").val("")
             $("#editCommand").val("")
             $("#editCronExpr").val("")
 
             $("#edit_Modal").modal("show")
+        })
+        $("#logRefreshBtn").on("click", function () {
+            getJobLog($("#logJobNameTxt").text())
         })
 
         refreshJobList()
@@ -158,6 +203,7 @@
                     toolbar.append($("<button class='btn btn-info jobEdit'>").html("编辑"))
                     toolbar.append($("<button class='btn btn-danger jobDel'>").html("删除"))
                     toolbar.append($("<button class='btn btn-warning jobKill'>").html("强杀"))
+                    toolbar.append($("<button class='btn btn-success jobLog'>").html("日志"))
 
                     tr.append($("<td>").append(toolbar))
 
@@ -240,6 +286,69 @@
                 console.log(err)
             }
         })
+    }
+
+    //查看日志
+    function getJobLog(jobName) {
+        $.ajax({
+            url: "/job/logs",
+            dataType: "json",
+            type: "get",
+            data: {"name": jobName},
+            success: function (resp) {
+                if (resp.errNo != 0) {   //服务器端报错
+                    console.log("errNo不为0，服务端报错")
+                    return
+                }
+
+                $("#log_List tbody").empty()
+                $("#logJobNameTxt").html(jobName)
+
+                var data = resp.data
+
+                //遍历数据，拼接加到表格中
+                for (i = 0; i < data.length; i++) {
+                    var logInfo = data[i]
+
+                    var tr = $("<tr>")
+                    tr.append($("<td>").html(logInfo.command))
+                    tr.append($("<td>").html(logInfo.err))
+                    tr.append($("<td>").html(logInfo.output))
+                    tr.append($("<td>").html(timeFormat(logInfo.planTime)))
+                    tr.append($("<td>").html(timeFormat(logInfo.scheduleTime)))
+                    tr.append($("<td>").html(timeFormat(logInfo.startTime)))
+                    tr.append($("<td>").html(timeFormat(logInfo.endTime)))
+
+                    $("#log_List tbody").append(tr)
+                }
+            },
+            error: function (err) {
+                console.log(err)
+            }
+        })
+    }
+
+    // 时间格式化函数
+    function timeFormat(millsecond) {
+        // 前缀补0: 2018-08-07 08:01:03.345
+        function paddingNum(num, n) {
+            var len = num.toString().length
+            while (len < n) {
+                num = '0' + num
+                len++
+            }
+            return num
+        }
+
+        var date = new Date(millsecond)
+        var year = date.getFullYear()
+        var month = paddingNum(date.getMonth() + 1, 2)
+        var day = paddingNum(date.getDate(), 2)
+        var hour = paddingNum(date.getHours(), 2)
+        var minute = paddingNum(date.getMinutes(), 2)
+        var second = paddingNum(date.getSeconds(), 2)
+        var millsecond = paddingNum(date.getMilliseconds(), 3)
+        return year + "-" + month + "-" + day + " " + hour + ":" + minute + ":" + second + "." + millsecond
     }
 </script>
 </body>

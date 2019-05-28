@@ -8,6 +8,9 @@
   "配置执行器的数量": "多个协程一起工作",
   "executeWorkCount":5,
 
+  "配置日志存储器的数量": "多个协程一起工作",
+  "logSinkWorkCount":5,
+
   "mongodb地址": "数据库连接地址",
   "mongodbUri": "mongodb://127.0.0.1:27017",
 

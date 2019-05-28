@@ -163,6 +163,59 @@ ERR:
 	}
 }
 
+//查看任务日志
+func handleJobLog(resp http.ResponseWriter, req *http.Request) {
+	var (
+		jobName    string
+		skipParam  string
+		limitParam string
+		skip       int
+		limit      int
+		err        error
+		result     []*common.JobLog
+		respBytes []byte
+	)
+	//解析表单
+	if err = req.ParseForm(); err != nil {
+		goto ERR
+	}
+
+	//获取数据   get Form    post PostForm
+	jobName = req.Form.Get("name")
+	skipParam = req.Form.Get("skip")
+	limitParam = req.Form.Get("limit")
+
+	//默认第一页
+	if skip, err = strconv.Atoi(skipParam); err != nil {
+		err = nil
+		skip = 0
+	}
+
+	//默认20个
+	if limit, err = strconv.Atoi(limitParam); err != nil {
+		err = nil
+		limit = 20
+	}
+
+	//获取mongo日志数据
+	if result,err = G_LogManage.GetLogList(jobName, skip, limit); err != nil {
+		goto ERR
+	}
+
+	//返回应答信息
+	if respBytes, err = common.BuildResponse(0, "success", result); err == nil {
+		resp.Write(respBytes)
+	}
+
+	return
+
+ERR:
+	log.Println("handleJobLog:", err.Error())
+	if respBytes, err = common.BuildResponse(-1, err.Error(), nil); err == nil {
+		resp.Write(respBytes)
+	}
+}
+
 var (
 	//单例对象
 	G_ApiServer *apiServer
@@ -184,6 +237,7 @@ func InitApiServer() (err error) {
 	mux.HandleFunc("/job/delete", handleJobDelete)
 	mux.HandleFunc("/job/list", handleJobList)
 	mux.HandleFunc("/job/kill", handleJobKill)
+	mux.HandleFunc("/job/logs", handleJobLog)
 
 	//配置静态资源路由，前端路由
 

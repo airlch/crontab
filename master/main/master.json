@@ -15,5 +15,11 @@
   "etcdDialTimeout":5000,
 
   "web页面根目录": "静态页面，前端",
-  "webRoot": "./crontab/master/main/webroot"
+  "webRoot": "./crontab/master/main/webroot",
+
+  "mongodb地址": "数据库连接地址",
+  "mongodbUri": "mongodb://127.0.0.1:27017",
+
+  "mongodb超时时间": "单位 毫秒",
+  "mongodbTimeOut": 5000
 }
