@@ -28,6 +28,7 @@
     <div class="row">
         <div class="col-md-12">
             <button type="button" class="btn btn-primary" id="create_Job">新建任务</button>
+            <button type="button" class="btn btn-success" id="get_WorkerList">健康节点</button>
         </div>
     </div>
 
@@ -120,6 +121,35 @@
     </div><!-- /.modal-dialog -->
 </div><!-- /.modal -->
 
+<div id="worker_Modal" class="modal fade" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span>
+                </button>
+                <h4 class="modal-title">查看健康节点
+                    <small id="logJobNameTxt"></small>
+                </h4>
+            </div>
+            <div class="modal-body">
+                <button id="workerRefreshBtn" type="button" class="btn btn-info">刷新</button>
+                <table id="worker_List" class="table table-striped">
+                    <thead>
+                    <tr>
+                        <th>序号</th>
+                        <th>节点IP地址</th>
+                    </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+            </div>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
 <script>
     //页面加载完成后的回调函数
     $(document).ready(function () {
@@ -168,6 +198,14 @@
         })
         $("#logRefreshBtn").on("click", function () {
             getJobLog($("#logJobNameTxt").text())
+        })
+        $("#get_WorkerList").on("click",function () {
+            getWorkerList()
+
+            $("#worker_Modal").modal("show")
+        })
+        $("#workerRefreshBtn").on("click", function () {
+            getWorkerList()
         })
 
         refreshJobList()
@@ -349,6 +387,40 @@
         var second = paddingNum(date.getSeconds(), 2)
         var millsecond = paddingNum(date.getMilliseconds(), 3)
         return year + "-" + month + "-" + day + " " + hour + ":" + minute + ":" + second + "." + millsecond
+    }
+
+    //刷新joblist列表
+    function getWorkerList() {
+        //无刷新拉取数据
+        $.ajax({
+            url: "/worker/list",
+            dataType: "json",
+            success: function (resp) {
+                if (resp.errNo != 0) {   //服务器端报错
+                    console.log("errNo不为0，服务端报错")
+                    return
+                }
+
+                $("#worker_List tbody").empty()
+
+                if (!resp.data) {
+                    return
+                }
+
+                //遍历数据，拼接加到表格中
+                for (i = 0; i < resp.data.length; i++) {
+                    var worker = resp.data[i]
+                    var tr = $("<tr>")
+                    tr.append($("<td>").html(i+1))
+                    tr.append($("<td>").html(worker))
+
+                    $("#worker_List tbody").append(tr)
+                }
+            },
+            error: function (err) {
+                console.log(err)
+            }
+        })
     }
 </script>
 </body>

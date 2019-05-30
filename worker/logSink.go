@@ -3,8 +3,11 @@ package worker
 import (
 	"airlch/crontab/common"
 	"context"
+	"fmt"
+	"github.com/mongodb/mongo-go-driver/bson/objectid"
 	"github.com/mongodb/mongo-go-driver/mongo"
 	"github.com/mongodb/mongo-go-driver/mongo/clientopt"
+	"log"
 	"time"
 )
 
@@ -55,6 +58,7 @@ func (logSink *LogSink) LogSinkLoop() {
 			tempLogInfoBatch = logInfoQueue[:logInfoQueueLength]
 			tempWorker = workerQueue[0]
 		}
+
 		select {
 		case logInfo = <-logSink.LogChan:
 			logInfoQueue = append(logInfoQueue, logInfo)
@@ -81,7 +85,22 @@ func (logSink *LogSink) LogSinkLoop() {
 
 //存储操作	批量操作，缓解数据库压力
 func (logSink *LogSink) SaveLogBatch(logBatch []interface{}) {
-	logSink.LogCollection.InsertMany(context.TODO(), logBatch)
+	//logSink.LogCollection.InsertMany(context.TODO(), logBatch)
+	var(
+		resultInfo *mongo.InsertManyResult
+		err error
+	)
+
+	if resultInfo, err = logSink.LogCollection.InsertMany(context.TODO(), logBatch); err != nil {
+		log.Println(err)
+		return
+	}
+
+	for _, insertId := range resultInfo.InsertedIDs {
+		// 拿着interface{}， 反射成objectID
+		docId := insertId.(objectid.ObjectID)
+		fmt.Println("自增ID:", docId.Hex())
+	}
 }
 
 //创建存储操作工作协程（多个协程抢数据，防止数据量过大，chan超过队列长度死锁数据丢失）
@@ -96,6 +115,7 @@ func (logSink *LogSink) CreateLogSinkWorker() {
 	for {
 		//在工作队列中排队
 		logSink.WorkerChan <- in
+
 
 		//接收数据
 		logInfoBatch = <-in

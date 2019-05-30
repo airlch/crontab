@@ -125,6 +125,8 @@ func (executor *Executor) HandleExecute(info *common.JobExecuteInfo) {
 		//任务输出和错误信息
 		executeResult.Output = output
 		executeResult.Err = err
+
+		time.Sleep(400 * time.Millisecond)
 	}
 
 	fmt.Println("执行任务：", info.Job.Name, info.PlanTime, info.RealTime, string(output), err)
@@ -137,7 +139,7 @@ func (executor *Executor) HandleExecute(info *common.JobExecuteInfo) {
 func InitExecutor() (err error) {
 	G_Executor = &Executor{
 		ExecuteInfoChan:   make(chan *common.JobExecuteInfo),
-			ExecuteWorkerChan: make(chan chan *common.JobExecuteInfo),
+		ExecuteWorkerChan: make(chan chan *common.JobExecuteInfo),
 	}
 
 	//监听任务执行

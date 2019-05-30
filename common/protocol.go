@@ -112,6 +112,11 @@ func ExtractKillName(killKey string) string {
 	return strings.TrimPrefix(killKey, JOB_KILLER_DIR)
 }
 
+// /cron/workers/job1 获得job1
+func ExtractWorkerName(workerKey string) string {
+	return strings.TrimPrefix(workerKey, JOB_WORKER_DIR)
+}
+
 //构造任务变化事件
 //任务变化事件有两种    1，更新  2，删除
 func BuildJobEvent(eventType int64, job *Job) (jobEvent *JobEvent) {

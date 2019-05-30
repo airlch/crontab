@@ -10,6 +10,9 @@ const (
 	//分布式锁路径
 	JOB_LOCK_DIR = "/cron/lock/"
 
+	//服务注册与发现目录
+	JOB_WORKER_DIR = "/cron/workers/"
+
 	//变化事件更新操作
 	JOB_EVENT_SAVE_TYPE = 1
 

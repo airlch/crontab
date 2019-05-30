@@ -60,7 +60,7 @@ func (schedule *Schedule) HandleExecuteResult(info *common.JobExecuteResult) {
 	//TODO：插入mongodb
 	G_LogSink.PushLog(jobLog)
 
-	fmt.Println("任务执行完成", info.ExecuteInfo.Job.Name, string(info.Output), info.Err)
+	//fmt.Println("任务执行完成", info.ExecuteInfo.Job.Name, string(info.Output), info.Err)
 }
 
 //尝试启动任务

@@ -173,7 +173,7 @@ func handleJobLog(resp http.ResponseWriter, req *http.Request) {
 		limit      int
 		err        error
 		result     []*common.JobLog
-		respBytes []byte
+		respBytes  []byte
 	)
 	//解析表单
 	if err = req.ParseForm(); err != nil {
@@ -198,12 +198,38 @@ func handleJobLog(resp http.ResponseWriter, req *http.Request) {
 	}
 
 	//获取mongo日志数据
-	if result,err = G_LogManage.GetLogList(jobName, skip, limit); err != nil {
+	if result, err = G_LogManage.GetLogList(jobName, skip, limit); err != nil {
 		goto ERR
 	}
 
 	//返回应答信息
 	if respBytes, err = common.BuildResponse(0, "success", result); err == nil {
+		resp.Write(respBytes)
+	}
+
+	return
+
+ERR:
+	log.Println("handleJobLog:", err.Error())
+	if respBytes, err = common.BuildResponse(-1, err.Error(), nil); err == nil {
+		resp.Write(respBytes)
+	}
+}
+
+//获取健康节点
+func handleWorkerList(resp http.ResponseWriter, req *http.Request) {
+	var (
+		workList  []string
+		err       error
+		respBytes []byte
+	)
+
+	if workList, err = G_WorkerManage.WorkerList(); err != nil {
+		goto ERR
+	}
+
+	//返回应答信息
+	if respBytes, err = common.BuildResponse(0, "success", workList); err == nil {
 		resp.Write(respBytes)
 	}
 
@@ -238,6 +264,7 @@ func InitApiServer() (err error) {
 	mux.HandleFunc("/job/list", handleJobList)
 	mux.HandleFunc("/job/kill", handleJobKill)
 	mux.HandleFunc("/job/logs", handleJobLog)
+	mux.HandleFunc("/worker/list", handleWorkerList)
 
 	//配置静态资源路由，前端路由
 

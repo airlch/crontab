@@ -16,7 +16,9 @@ func initArgs() {
 	//master -config ./master.json
 	//master -h
 	//flag.StringVar(&confFile,"config","./master.json","指定master.json")
-	flag.StringVar(&confFile, "config", "./crontab/worker/main/worker.json", "指定worker.json")
+	//flag.StringVar(&confFile, "config", "./crontab/worker/main/worker.json", "指定worker.json")
+	flag.StringVar(&confFile, "config", "E:/own/go/src/airlch/crontab/worker/main/worker.json", "指定worker.json")
+	//flag.StringVar(&confFile, "config", "E:/main/worker.json", "指定worker.json")
 	flag.Parse()
 }
 
@@ -46,18 +48,23 @@ func main() {
 		goto ERR
 	}
 
+	//初始化日志保存
+	if err = worker.InitLogSink(); err != nil {
+		goto ERR
+	}
+
 	//初始化调度器
 	if err = worker.InitSchedule(); err != nil {
 		goto ERR
 	}
 
-	//任务管理器
-	if err = worker.InitJobManage(); err != nil {
+	//初始化服务注册
+	if err = worker.InitRegist(); err != nil {
 		goto ERR
 	}
 
-	//初始化日志保存
-	if err = worker.InitLogSink(); err != nil {
+	//任务管理器
+	if err = worker.InitJobManage(); err != nil {
 		goto ERR
 	}
 
